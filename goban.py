@@ -10,8 +10,8 @@ class Goban(object):
     """
     The code to represent the Goban and the stones placed on it.
     Along with the functionality associated with "whole-board" issues.
-    Eg: Anything that requires knowledge of the board size or the stones on
-    it will likely be handled in this class
+    Eg: Anything that requires knowledge of the board size or the
+    stones on it will likely be handled in this class
     """
 
     def __init__(self, size):
@@ -34,17 +34,19 @@ class Goban(object):
     def get(self, index):
         """
         Gets the item on the board at the given index
-        :param index: The integer index of the position, to convert to an integer
-                      index from a positional tuple, use the index_from_position_tuple method
-        :return: Returns the item at the index, this will either be None, or a Stone object
+        :param index: The integer index of the position, to convert
+                      to an integer index from a positional tuple, use
+                      the index_from_position_tuple method
+        :return: Returns the item at the index, this will either be None,
+                 or a Stone object
         """
         return self.board[index]
 
     def __str__(self):
         """
-        :return: The board represented as a string: empty vertices are denoted with a dot
-                 white stones with *, and black stones with o. Coordinate numbers are
-                 marked along all sides
+        :return: The board represented as a string: empty vertices are denoted
+                 with a dot white stones with *, and black stones with o.
+                 Coordinate numbers are marked along all sides
         """
         s = "\n  "
         for i in range(self.size):
@@ -69,7 +71,8 @@ class Goban(object):
         """
         Converts an integer index into the corresponding position tuple
         :param index: A single integer within the range of the self.board list
-        :return: A tuple of two strings with the X and Y coordinates of the position, respectively
+        :return: A tuple of two strings with the X and Y coordinates
+                 of the position, respectively
         """
         x = self.base_values[index % self.size]
         y = self.base_values[index // self.size]
@@ -78,9 +81,10 @@ class Goban(object):
     def index_from_position_tuple(self, position):
         """
         Translates a positional tuple into an integer index.
-        :param position: Either a tuple of strings, or a string containing the X and Y
-                         coordinates of the move, in that order
-        :return: Returns the index for self.board that corresponds with the given position
+        :param position: Either a tuple of strings, or a string containing
+                         the X and Y coordinates of the move, in that order
+        :return: Returns the index for self.board that corresponds
+                 with the given position
         """
         x = self.base_values.index(position[0])
         y = self.base_values.index(position[1])
@@ -93,15 +97,47 @@ class Goban(object):
         :param index: The integer index of the intended stone placement
         :return: True if the move is valid, false otherwise
         """
-        if self.get(index) is None:
-            return True
-        else:
+        if self.get(index) is not None:
+            print("Invalid move - Space it occupied")
             return False
+        elif self.is_suicide(stone_color, index):
+            print("Invalid move - Suicide")
+            return False
+        else:
+            return True
+
+    def is_suicide(self, stone_color, index):
+        stone = Stone(stone_color)
+        cardinal_indices = self.cardinal_indices(index)
+        # First check to see if there are any immediate liberties
+        for ci in cardinal_indices:
+            card = self.get(ci)
+            if card is None:
+                # There is an empty liberty so the move is not suicide
+                return False
+        # No liberties, so all spaces around the stone are filled
+        # Two conditions will save us, an enemy group being captured,
+        # or a single friendly group having more than 1 liberty.
+        for ci in cardinal_indices:
+            card = self.get(ci)
+            # Adjacent group is friendly
+            if card.color == stone.color:
+                # And we are not filling its last liberty
+                if self.group_liberties(ci) > 1:
+                    return False
+            # Adjacent group is foe
+            else:
+                # But we *are* filling its last liberty
+                if self.group_liberties(ci) == 1:
+                    return False
+        # If none of the above is true, this is an invalid move
+        return True
 
     def place_stone(self, stone_color, position):
         """
-        Places a stone of the given color at the position indicated by the positional tuple
-        :param stone_color: A member of the StoneColor enum (StoneColor.black or StoneColor.white)
+        Places a stone of the given color at the position indicated
+        by the positional tuple
+        :param stone_color: A member of the StoneColor enum
         :param position: A tuple of the X and Y coordinates for the move
         :return: Returns True if the move was successful, False otherwise
         """
@@ -113,29 +149,38 @@ class Goban(object):
             stone = Stone(stone_color)
             # Add it to the board
             self.board[index] = stone
-            # Create a new group of a single stone
-            # This way single stones still have a parent group to belong to
-            g = Group(self)
-            g.add_member(index)
-            stone.group = g
-            # And add the group to the list of all groups
-            self.groups.append(g)
-            # Find any and all groups contiguous to this stone
-            contiguous = self.contiguous_groups(index)
-            # Add this single stone group to the list
-            contiguous.append(g)
-            # And link all of these together
-            self.link_groups(contiguous)
+            # Create a new group for the stone
+            # and link it to all contiguous groups
+            self.link_stone(index)
             return True
         else:
             return False
 
+    def link_stone(self, index):
+        stone = self.get(index)
+        # Create a group of a single stone first,
+        # this way every stone will have a group
+        group = Group(self)
+        group.add_member(index)
+        stone.group = group
+        # Add this new group to the list of all groups
+        self.groups.append(group)
+        # Now check for contiguous groups
+        contiguous = self.contiguous_groups(index)
+        # Add the single stone group to the list
+        contiguous.append(group)
+        # Link all of these together
+        self.link_groups(contiguous)
+
     def contiguous_groups(self, index):
         """
-        Called on a group of a single stone, when the stone is added to the board,
-        for the purpose of connecting the stones to the contiguous groups
-        :param index: The index of the stone being tested (generally the one just placed on the board)
-        :return: A list containing any groups that are the same color and contiguous to the stone
+        Called on a group of a single stone, when the stone is added
+        to the board,for the purpose of connecting the stones to
+        the contiguous groups
+        :param index: The index of the stone being tested
+                      (generally the one just placed on the board)
+        :return: A list containing any groups that are the same color
+                 and contiguous to the stone
         """
         # A container to hold contiguous groups
         contiguous = []
@@ -150,10 +195,10 @@ class Goban(object):
                 contiguous.append(s.group)
         return contiguous
 
-
     def link_groups(self, groups):
         """
-        Links groups together, but does not directly test to see that they are contiguous
+        Links groups together, but does not directly test to see
+        that they are contiguous
         The smaller groups are merged into the largest one
         :param groups: a list of groups to be linked
         :return: Returns None
@@ -184,7 +229,7 @@ class Goban(object):
 
     def north_index(self, index):
         """
-        Gets the index of the stone directly to the "north" of the current stone
+        Gets the index of the stone directly to the "north"
         :param index: The integer index of the current stone
         :return: The integer index of the northern stone
         """
@@ -192,7 +237,7 @@ class Goban(object):
 
     def east_index(self, index):
         """
-        Gets the index of the stone directly to the "east" of the current stone
+        Gets the index of the stone directly to the "east"
         :param index: The integer index of the current stone
         :return: The integer index of the eastern stone
         """
@@ -200,7 +245,7 @@ class Goban(object):
 
     def south_index(self, index):
         """
-        Gets the index of the stone directly to the "south" of the current stone
+        Gets the index of the stone directly to the "south"
         :param index: The integer index of the current stone
         :return: The integer index of the southern stone
         """
@@ -208,7 +253,7 @@ class Goban(object):
 
     def west_index(self, index):
         """
-        Gets the index of the stone directly to the "west" of the current stone
+        Gets the index of the stone directly to the "west"
         :param index: The integer index of the current stone
         :return: The integer index of the western stone
         """
@@ -216,10 +261,12 @@ class Goban(object):
 
     def cardinal_stones(self, index):
         """
-        Gets the stones directly above, below, and to the sides of the stone at the index
-        :param index: The index of the original stone as an int (not a positional tuple)
-        :return: Returns a list of the contents of the vertices directly adjacent, which
-                 may or may not contain stones
+        Gets the stones directly above, below, and to the sides of the
+        stone at the index
+        :param index: The index of the original stone as an int
+                      (not a positional tuple)
+        :return: Returns a list of the contents of the vertices directly
+                 adjacent, which may or may not contain stones
         """
         return [
             self.get(self.north_index(index)),
@@ -244,7 +291,8 @@ class Goban(object):
     def highlight_group_at(self, position):
         """
         If there is a stone at the given position tuple, highlights the group
-        :param position: A position tuple or string indicating a single stone in the group
+        :param position: A position tuple or string indicating a
+                         single stone in the group
         :return: Returns None
         """
         index = self.index_from_position_tuple(position)
@@ -272,3 +320,10 @@ class Goban(object):
                     liberties.add(ci)
         return len(liberties)
 
+    def group_captured(self, index):
+        """
+        Tests to see if a group is captured
+        :param index: The index of a stone in the group
+        :return: True if the group has been captured, False if it has not
+        """
+        return self.group_liberties(index) == 0
