@@ -21,4 +21,3 @@ if __name__ == "__main__":
     b.white_play_at('24')
 
     print(b)
-    print(b.board_string())

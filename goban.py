@@ -1,6 +1,7 @@
 from stone import *
 from group import *
 
+
 class BoardError(Exception):
     """Empty class to simply rename the basic Exception"""
     pass
