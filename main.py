@@ -9,6 +9,9 @@ and possibly scoring. AI is not currently envisioned as a feature.
 
 if __name__ == "__main__":
     b = Goban(19)
+
+    # Lee Sedol and Gu Li
+    # Game 7 Jubango Moves 1-10
     b.black_play_at('F3')
     b.white_play_at('3F')
     b.black_play_at('GF')

@@ -31,6 +31,8 @@ class Goban(object):
             self.size = size
             self.board = [None for _ in range(size * size)]
             self.groups = []
+            self.history = []
+            self.undo = None
 
     def get(self, index):
         """
@@ -118,17 +120,17 @@ class Goban(object):
         cardinal_indices = self.cardinal_indices(index)
         # First check to see if there are any immediate liberties
         for ci in cardinal_indices:
-            card = self.get(ci)
-            if card is None:
+            stone = self.get(ci)
+            if stone is None:
                 # There is an empty liberty so the move is not suicide
                 return False
         # No liberties, so all spaces around the stone are filled
         # Two conditions will save us, an enemy group being captured,
         # or a single friendly group having more than 1 liberty.
         for ci in cardinal_indices:
-            card = self.get(ci)
+            stone = self.get(ci)
             # Adjacent group is friendly
-            if card.color == stone_color:
+            if stone.color == stone_color:
                 # And we are not filling its last liberty
                 if self.group_liberties(ci) > 1:
                     return False
@@ -148,6 +150,8 @@ class Goban(object):
         :param position: A tuple of the X and Y coordinates for the move
         :return: Returns True if the move was successful, False otherwise
         """
+        # Copy the current board positions as the 'undo' board
+        self.undo = self.board[:]
         # Get the index from the position tuple
         index = self.index_from_position_tuple(position)
         # Check to see if the move is valid
@@ -159,7 +163,18 @@ class Goban(object):
             # Create a new group for the stone
             # and link it to all contiguous groups
             self.link_stone(index)
-            self.test_captures(index)
+            self.process_captures(index)
+
+            # Ko Violations:
+            # The only way to easily check for Ko violations is to process
+            # the captures first then see if this board has been seen before
+            bstring = self.board_string()
+            for hstring in self.history:
+                if bstring == hstring:
+                    print("Invalid Move - Ko Violation")
+                    self.board = self.undo
+                    return False
+            self.history.append(self.board_string())
             return True
         else:
             return False
@@ -233,7 +248,7 @@ class Goban(object):
             # And remove the smaller group from the global list
             self.groups.remove(group)
 
-    def test_captures(self, index):
+    def process_captures(self, index):
         """
         Takes the index of a newly placed stone and checks to see if any of the
         surrounding groups were captured by its placement
@@ -292,13 +307,13 @@ class Goban(object):
         :param index: Integer index
         :return: A list of indices
         """
-        cards = [
+        cardinals = [
             self.north_index(index),
             self.east_index(index),
             self.south_index(index),
             self.west_index(index)
         ]
-        return [i for i in cards if 0 < i < (self.size * self.size)]
+        return [i for i in cardinals if 0 < i < (self.size * self.size)]
 
     def highlight_group_at(self, position):
         """
@@ -358,8 +373,8 @@ class Goban(object):
         """
         s = ""
         for i, v in enumerate(self.board):
-            if i % 81 == 0:
-                s += "\n"
+            # if i % 81 == 0:
+            #     s += "\n"
             if v is None:
                 s += "0"
             else:
