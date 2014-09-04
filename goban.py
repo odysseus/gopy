@@ -283,7 +283,12 @@ class Goban(object):
         :param index: The integer index of the current stone
         :return: The integer index of the eastern stone
         """
-        return index + 1
+        # Add a check for the edge of the board
+        if index % self.size == self.size - 1:
+            # Indices of < 0 are filtered out in cardinal_indices()
+            return -1
+        else:
+            return index + 1
 
     def south_index(self, index):
         """
@@ -299,7 +304,10 @@ class Goban(object):
         :param index: The integer index of the current stone
         :return: The integer index of the western stone
         """
-        return index - 1
+        if index % self.size == 0:
+            return -1
+        else:
+            return index - 1
 
     def cardinal_indices(self, index):
         """
