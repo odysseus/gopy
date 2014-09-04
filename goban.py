@@ -107,7 +107,13 @@ class Goban(object):
             return True
 
     def is_suicide(self, stone_color, index):
-        stone = Stone(stone_color)
+        """
+        Boolean method that checks to see if making a move would result
+        in the destruction of one's own pieces
+        :param stone_color: The StoneColor color of the move to be made
+        :param index: The integer index of the move to be made
+        :return: Returns False if the move is *not* suicide, True otherwise
+        """
         cardinal_indices = self.cardinal_indices(index)
         # First check to see if there are any immediate liberties
         for ci in cardinal_indices:
@@ -121,7 +127,7 @@ class Goban(object):
         for ci in cardinal_indices:
             card = self.get(ci)
             # Adjacent group is friendly
-            if card.color == stone.color:
+            if card.color == stone_color:
                 # And we are not filling its last liberty
                 if self.group_liberties(ci) > 1:
                     return False
@@ -152,11 +158,18 @@ class Goban(object):
             # Create a new group for the stone
             # and link it to all contiguous groups
             self.link_stone(index)
+            self.test_captures(index)
             return True
         else:
             return False
 
     def link_stone(self, index):
+        """
+        Creates a new group for a newly placed stone, and if needed
+        links that to all contiguous groups of the same color
+        :param index: Integer index of a newly added stone
+        :return: Returns None
+        """
         stone = self.get(index)
         # Create a group of a single stone first,
         # this way every stone will have a group
@@ -218,6 +231,19 @@ class Goban(object):
                 self.get(stone_index).group = max_group
             # And remove the smaller group from the global list
             self.groups.remove(group)
+
+    def test_captures(self, index):
+        """
+        Takes the index of a newly placed stone and checks to see if any of the
+        surrounding groups were captured by its placement
+        :param index: The index of a newly placed stone
+        :return: Returns None
+        """
+        cardinal_indices = self.cardinal_indices(index)
+        for i in cardinal_indices:
+            if self.get(i) is not None:
+                if self.group_captured(i):
+                    self.remove_group(i)
 
     def white_play_at(self, position):
         """Shorthand method for playing a move as white"""
@@ -312,3 +338,32 @@ class Goban(object):
         :return: True if the group has been captured, False if it has not
         """
         return self.group_liberties(index) == 0
+
+    def remove_group(self, index):
+        """
+        Removes a captured group from the board
+        :param index: The index of a single stone from the group to be removed
+        :return: Returns None
+        """
+        group = self.get(index).group
+        for stone_index in group.members:
+            self.board[stone_index] = None
+
+    def board_string(self):
+        """
+        Creates a compact string of the current board positions, useful
+        in recognizing Ko and for keeping game records
+        :return: A string summarizing the current board positions
+        """
+        s = ""
+        for i, v in enumerate(self.board):
+            if i % 81 == 0:
+                s += "\n"
+            if v is None:
+                s += "0"
+            else:
+                if v.color == StoneColor.black:
+                    s += "1"
+                else:
+                    s += "2"
+        return s
