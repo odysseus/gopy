@@ -28,5 +28,5 @@ class Stone(object):
                 return "O"
             elif self.color == StoneColor.highlight_white:
                 return "@"
-            else:
-                return "?"
+        else:
+            return "?"

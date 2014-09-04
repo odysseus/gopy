@@ -228,6 +228,19 @@ class Goban(object):
             self.get(self.west_index(index))
         ]
 
+    def cardinal_indices(self, index):
+        """
+        Returns a list of indices that are contiguous to the index provided
+        :param index: Integer index
+        :return: A list of indices
+        """
+        return [
+            self.north_index(index),
+            self.east_index(index),
+            self.south_index(index),
+            self.west_index(index)
+        ]
+
     def highlight_group_at(self, position):
         """
         If there is a stone at the given position tuple, highlights the group
@@ -238,8 +251,24 @@ class Goban(object):
         stone = self.get(index)
         group = stone.group
         if stone.color == StoneColor.black:
-            hicolor = StoneColor.highlight_black
+            highlight_color = StoneColor.highlight_black
         else:
-            hicolor = StoneColor.highlight_white
-        for sind in group.members:
-            self.get(sind).color = hicolor
+            highlight_color = StoneColor.highlight_white
+        for stone_index in group.members:
+            self.get(stone_index).color = highlight_color
+
+    def group_liberties(self, index):
+        """
+        Counts the liberties for a group
+        :param index: The index of a single stone in the group
+        :return: An integer representing the number of unique liberties
+        """
+        group = self.get(index).group
+        liberties = set()
+        for i in group.members:
+            cardinal_indices = self.cardinal_indices(i)
+            for ci in cardinal_indices:
+                if self.get(ci) is None:
+                    liberties.add(ci)
+        return len(liberties)
+
