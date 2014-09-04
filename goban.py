@@ -187,7 +187,7 @@ class Goban(object):
         # The stone object itself
         stone = self.get(index)
         # The objects at the four vertices surrounding the stone
-        cardinal_stones = self.cardinal_stones(index)
+        cardinal_stones = [self.get(i) for i in self.cardinal_indices(index)]
         for s in cardinal_stones:
             # If it is a stone, and if the stone is the same color
             if s is not None and s.color == stone.color:
@@ -259,34 +259,19 @@ class Goban(object):
         """
         return index - 1
 
-    def cardinal_stones(self, index):
-        """
-        Gets the stones directly above, below, and to the sides of the
-        stone at the index
-        :param index: The index of the original stone as an int
-                      (not a positional tuple)
-        :return: Returns a list of the contents of the vertices directly
-                 adjacent, which may or may not contain stones
-        """
-        return [
-            self.get(self.north_index(index)),
-            self.get(self.east_index(index)),
-            self.get(self.south_index(index)),
-            self.get(self.west_index(index))
-        ]
-
     def cardinal_indices(self, index):
         """
         Returns a list of indices that are contiguous to the index provided
         :param index: Integer index
         :return: A list of indices
         """
-        return [
+        cards = [
             self.north_index(index),
             self.east_index(index),
             self.south_index(index),
             self.west_index(index)
         ]
+        return [i for i in cards if 0 < i < (self.size * self.size)]
 
     def highlight_group_at(self, position):
         """
