@@ -6,10 +6,19 @@ play the game and understands the rules of capturing, and possibly scoring. AI i
 currently envisioned as a feature.
 """
 
+
 if __name__ == "__main__":
     size = 19
     b = Goban(size)
-    b.place_stone(StoneColor.black, ('1', '1'))
-    b.place_stone(StoneColor.white, ('2', '2'))
+    b.black_play_at('F3')
+    b.white_play_at('3F')
+    b.black_play_at('GF')
+    b.white_play_at('32')
+    b.black_play_at('5G')
+    b.white_play_at('2D')
+    b.black_play_at('EF')
+    b.white_play_at('9G')
+    b.black_play_at('34')
+    b.white_play_at('24')
 
     print(b)

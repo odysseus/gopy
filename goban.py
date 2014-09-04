@@ -113,6 +113,12 @@ class Goban(object):
         else:
             return False
 
+    def white_play_at(self, position):
+        self.place_stone(StoneColor.white, position)
+
+    def black_play_at(self, position):
+        self.place_stone(StoneColor.black, position)
+
     def north_index(self, index):
         """
         Gets the index of the stone directly to the "north" of the current stone
